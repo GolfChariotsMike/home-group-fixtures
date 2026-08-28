@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home Group — Round Robin Tournament</title>
+  <title>Home Group — Volleyball Tournament</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -19,28 +19,27 @@
 
     header {
       background: #111;
-      border-bottom: 3px solid #c9a84c;
-      padding: 12px 32px;
+      border-bottom: 4px solid #c9a84c;
+      padding: 10px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
     }
 
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 1px;
+    header img {
+      height: 48px;
+      object-fit: contain;
     }
 
     header .clock {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 700;
       color: #c9a84c;
       font-variant-numeric: tabular-nums;
+      letter-spacing: 2px;
     }
 
-    /* Four panels stacked — current is big, others compressed */
     .rounds-wrapper {
       flex: 1;
       display: flex;
@@ -58,9 +57,9 @@
       min-height: 0;
     }
 
-    .round-panel.is-current { flex-shrink: 0; height: 35vh; }
+    .round-panel.is-current { flex: 1; }
     .round-panel.is-next    { flex-shrink: 0; height: 90px; }
-    .round-panel.is-later   { flex-shrink: 0; height: 80px; }
+    .round-panel.is-later   { flex-shrink: 0; height: 72px; }
 
     .round-header {
       padding: 8px 20px;
@@ -70,9 +69,9 @@
       flex-shrink: 0;
     }
 
-    .round-header.current  { background: #c9a84c; color: #000; }
-    .round-header.next     { background: #1a1a00; padding: 2px 10px; min-height: 0; }
-    .round-header.later    { background: #111100; padding: 2px 10px; min-height: 0; }
+    .round-header.current { background: #c9a84c; color: #000; }
+    .round-header.next    { background: #1a1500; padding: 6px 14px; }
+    .round-header.later   { background: #111100; padding: 4px 14px; }
 
     .round-label {
       font-size: 1rem;
@@ -82,48 +81,30 @@
     }
 
     .round-panel.is-next .round-label,
-    .round-panel.is-later .round-label { font-size: 0.65rem; }
-
-    .round-time-block {
-      display: flex;
-      align-items: baseline;
-      gap: 14px;
-    }
+    .round-panel.is-later .round-label { font-size: 0.7rem; color: #c9a84c; }
 
     .round-time {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
     }
 
     .round-panel.is-next .round-time,
-    .round-panel.is-later .round-time { font-size: 0.65rem; }
+    .round-panel.is-later .round-time { font-size: 0.7rem; color: #888; }
 
     .round-countdown {
-      font-size: 0.85rem;
-      opacity: 0.9;
-      font-variant-numeric: tabular-nums;
-      background: rgba(0,0,0,0.25);
+      font-size: 0.8rem;
+      background: rgba(0,0,0,0.3);
       padding: 2px 8px;
       border-radius: 4px;
+      font-variant-numeric: tabular-nums;
     }
 
-    .round-panel.is-later .round-countdown { display: none; }
-
-    /* Courts grid — 5 columns for current round */
-    .courts-row {
+    /* Current round: 5 courts in a row */
+    .courts-grid {
       flex: 1;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: 1fr;
       min-height: 0;
-      overflow: hidden;
-    }
-
-    /* Upcoming rounds: all 8 courts in a single row */
-    .courts-row.inline-fixtures {
-      display: flex;
-      flex-direction: row;
-      height: auto;
     }
 
     .court-cell {
@@ -131,71 +112,65 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 3px 4px;
+      padding: 8px 4px;
       border-right: 1px solid #1c1c1c;
-      border-bottom: 1px solid #1c1c1c;
       text-align: center;
-      gap: 2px;
+      gap: 6px;
     }
 
-    .court-cell:nth-child(5n) { border-right: none; }
-    .court-cell { border-bottom: none; }
-
-    /* Single-row inline cell */
-    .court-cell.inline {
-      flex: 1;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3px 4px;
-      gap: 1px;
-      border-right: 1px solid #1c1c1c;
-      border-bottom: none;
-      min-width: 0;
-    }
-
-    .court-cell.inline:last-child { border-right: none; }
+    .court-cell:last-child { border-right: none; }
 
     .court-tag {
-      font-size: 0.65rem;
-      color: #fff;
+      font-size: 0.7rem;
+      color: #c9a84c;
       font-weight: 700;
       letter-spacing: 1px;
       text-transform: uppercase;
     }
 
-    .court-cell.inline .court-tag {
-      font-size: 0.55rem;
-      color: #888;
-      white-space: nowrap;
-    }
-
     .team-name {
-      font-size: 0.9rem;
+      font-size: 1.4rem;
       font-weight: 800;
       line-height: 1.1;
-      word-break: break-word;
-    }
-
-    .court-cell.inline .matchup {
-      font-size: 0.78rem;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: #fff;
-      width: 100%;
-      text-align: center;
     }
 
     .vs-badge {
-      font-size: 0.6rem;
+      font-size: 0.65rem;
       color: #c9a84c;
       font-weight: 700;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
     }
 
-    /* Bye strip */
+    /* Upcoming: inline row of courts */
+    .courts-inline {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    .court-inline {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-right: 1px solid #1c1c1c;
+      text-align: center;
+      gap: 2px;
+    }
+
+    .court-inline:last-child { border-right: none; }
+
+    .court-inline .court-tag { font-size: 0.55rem; color: #666; }
+
+    .court-inline .matchup {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #ddd;
+      white-space: nowrap;
+    }
+
     .bye-strip {
       flex-shrink: 0;
       background: #0a0a0a;
@@ -204,280 +179,161 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
     }
 
     .bye-label {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: #555;
       font-weight: 700;
       letter-spacing: 1px;
-      text-transform: uppercase;
-      flex-shrink: 0;
     }
 
     .bye-team {
       font-size: 0.65rem;
-      color: #555;
-      font-weight: 600;
+      color: #777;
       background: #151515;
       border: 1px solid #222;
-      padding: 1px 7px;
+      padding: 1px 8px;
       border-radius: 3px;
-    }
-
-    .done-state {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #333;
-      font-size: 1.2rem;
-      font-weight: 700;
-      letter-spacing: 2px;
     }
   </style>
 </head>
 <body>
 
 <header>
-  <img src="logo.jpg" alt="Home Group" style="height:44px;object-fit:contain;">
+  <img src="logo.jpg" alt="Home Group" />
   <div class="clock" id="clock">--:--:--</div>
 </header>
 
-<div class="rounds-wrapper" id="roundsWrapper">
-  <div class="round-panel is-current" id="panelA"></div>
-  <div class="round-panel is-next" id="panelB"></div>
-  <div class="round-panel is-later" id="panelC"></div>
-  <div class="round-panel is-later" id="panelD"></div>
-  <div class="round-panel is-later" id="panelE"></div>
-  <div class="round-panel is-later" id="panelF"></div>
-</div>
+<div class="rounds-wrapper" id="wrapper"></div>
 
 <script>
-const fixtures = [
-const FIXTURES = [
-  // RD 1 — 1:00 PM
-  ["1:00 PM","Court 1","1","2"],
-  ["1:00 PM","Court 2","3","11"],
-  ["1:00 PM","Court 3","4","10"],
-  ["1:00 PM","Court 4","5","9"],
-  ["1:00 PM","Court 5","6","8"],
-  // RD 2 — 1:15 PM
-  ["1:15 PM","Court 1","1","3"],
-  ["1:15 PM","Court 2","4","11"],
-  ["1:15 PM","Court 3","5","10"],
-  ["1:15 PM","Court 4","6","9"],
-  ["1:15 PM","Court 5","7","8"],
-  // RD 3 — 1:30 PM
-  ["1:30 PM","Court 1","1","4"],
-  ["1:30 PM","Court 2","2","3"],
-  ["1:30 PM","Court 3","5","11"],
-  ["1:30 PM","Court 4","6","10"],
-  ["1:30 PM","Court 5","7","9"],
-  // RD 4 — 1:45 PM
-  ["1:45 PM","Court 1","1","5"],
-  ["1:45 PM","Court 2","2","4"],
-  ["1:45 PM","Court 3","6","11"],
-  ["1:45 PM","Court 4","7","10"],
-  ["1:45 PM","Court 5","8","9"],
-  // RD 5 — 2:00 PM
-  ["2:00 PM","Court 1","1","6"],
-  ["2:00 PM","Court 2","2","5"],
-  ["2:00 PM","Court 3","3","4"],
-  ["2:00 PM","Court 4","7","11"],
-  ["2:00 PM","Court 5","8","10"],
-  // RD 6 — 2:15 PM
-  ["2:15 PM","Court 1","1","7"],
-  ["2:15 PM","Court 2","2","6"],
-  ["2:15 PM","Court 3","3","5"],
-  ["2:15 PM","Court 4","8","11"],
-  ["2:15 PM","Court 5","9","10"],
-  // RD 7 — 2:30 PM
-  ["2:30 PM","Court 1","1","8"],
-  ["2:30 PM","Court 2","2","7"],
-  ["2:30 PM","Court 3","3","6"],
-  ["2:30 PM","Court 4","4","5"],
-  ["2:30 PM","Court 5","9","11"],
-  // RD 8 — 2:45 PM
-  ["2:45 PM","Court 1","1","9"],
-  ["2:45 PM","Court 2","2","8"],
-  ["2:45 PM","Court 3","3","7"],
-  ["2:45 PM","Court 4","4","6"],
-  ["2:45 PM","Court 5","10","11"],
-  // RD 9 — 3:00 PM
-  ["3:00 PM","Court 1","1","10"],
-  ["3:00 PM","Court 2","2","9"],
-  ["3:00 PM","Court 3","3","8"],
-  ["3:00 PM","Court 4","4","7"],
-  ["3:00 PM","Court 5","5","6"],
-  // RD 10 — 3:15 PM
-  ["3:15 PM","Court 1","1","11"],
-  ["3:15 PM","Court 2","2","10"],
-  ["3:15 PM","Court 3","3","9"],
-  ["3:15 PM","Court 4","4","8"],
-  ["3:15 PM","Court 5","5","7"],
-  // RD 11 — 3:30 PM
-  ["3:30 PM","Court 1","2","11"],
-  ["3:30 PM","Court 2","3","10"],
-  ["3:30 PM","Court 3","4","9"],
-  ["3:30 PM","Court 4","5","8"],
-  ["3:30 PM","Court 5","6","7"],
-  // PRELIM — 3:45 PM
-  ["3:45 PM","Court 1","PRELIM","TBD"],
-  // FINAL — 4:00 PM
-  ["4:00 PM","Court 1","FINAL","TBD"],
+// ── Tournament data ──────────────────────────────────────────
+const ROUNDS = [
+  { label: "RD 1",    time: "1:00 PM", courts: [["1","2"],["3","11"],["4","10"],["5","9"],["6","8"]],   bye: "7"  },
+  { label: "RD 2",    time: "1:15 PM", courts: [["1","3"],["4","11"],["5","10"],["6","9"],["7","8"]],   bye: "2"  },
+  { label: "RD 3",    time: "1:30 PM", courts: [["1","4"],["2","3"],["5","11"],["6","10"],["7","9"]],   bye: "8"  },
+  { label: "RD 4",    time: "1:45 PM", courts: [["1","5"],["2","4"],["6","11"],["7","10"],["8","9"]],   bye: "3"  },
+  { label: "RD 5",    time: "2:00 PM", courts: [["1","6"],["2","5"],["3","4"],["7","11"],["8","10"]],   bye: "9"  },
+  { label: "RD 6",    time: "2:15 PM", courts: [["1","7"],["2","6"],["3","5"],["8","11"],["9","10"]],   bye: "4"  },
+  { label: "RD 7",    time: "2:30 PM", courts: [["1","8"],["2","7"],["3","6"],["4","5"],["9","11"]],    bye: "10" },
+  { label: "RD 8",    time: "2:45 PM", courts: [["1","9"],["2","8"],["3","7"],["4","6"],["10","11"]],   bye: "5"  },
+  { label: "RD 9",    time: "3:00 PM", courts: [["1","10"],["2","9"],["3","8"],["4","7"],["5","6"]],    bye: "11" },
+  { label: "RD 10",   time: "3:15 PM", courts: [["1","11"],["2","10"],["3","9"],["4","8"],["5","7"]],   bye: "6"  },
+  { label: "RD 11",   time: "3:30 PM", courts: [["2","11"],["3","10"],["4","9"],["5","8"],["6","7"]],   bye: "1"  },
+  { label: "PRELIM",  time: "3:45 PM", courts: [["TBD","TBD"]],                                        bye: null },
+  { label: "FINAL",   time: "4:00 PM", courts: [["TBD","TBD"]],                                        bye: null },
 ];
 
-let rounds = {};
-let roundTimes = [];
-let ALL_TEAMS = [];
-
-function loadFixtures() {
-  rounds = {};
-  FIXTURES.forEach(([time, court, teamA, teamB]) => {
-    if (!rounds[time]) rounds[time] = [];
-    rounds[time].push({ court, teamA, teamB });
-  });
-  roundTimes = Object.keys(rounds);
-  roundTimes.sort((a, b) => parseTimeToDate(a) - parseTimeToDate(b));
-  ALL_TEAMS = [...new Set(FIXTURES.flatMap(([,,a,b]) => [a,b]))].filter(t => !['PRELIM','FINAL','TBD'].includes(t)).sort((a,b) => +a - +b);
-}
-
-function getByes(roundIdx) {
-  if (roundIdx >= roundTimes.length) return [];
-  const playing = new Set();
-  rounds[roundTimes[roundIdx]].forEach(({ teamA, teamB }) => {
-    playing.add(teamA); playing.add(teamB);
-  });
-  return ALL_TEAMS.filter(t => !playing.has(t));
-}
-
-function parseTimeToDate(str) {
-  const today = new Date();
-  const [time, period] = str.trim().split(' ');
-  let [h, m] = time.split(':').map(Number);
+// ── Time helpers ─────────────────────────────────────────────
+function parseTime(str) {
+  const [timePart, period] = str.trim().split(' ');
+  let [h, m] = timePart.split(':').map(Number);
   if (period === 'PM' && h !== 12) h += 12;
   if (period === 'AM' && h === 12) h = 0;
-  return new Date(today.getFullYear(), today.getMonth(), today.getDate(), h, m, 0);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
 }
 
-function getCurrentRoundIndex() {
+function currentRoundIdx() {
   const now = new Date();
-  let idx = -1;
-  for (let i = 0; i < roundTimes.length; i++) {
-    if (parseTimeToDate(roundTimes[i]) <= now) idx = i;
+  let idx = 0;
+  for (let i = 0; i < ROUNDS.length; i++) {
+    if (parseTime(ROUNDS[i].time) <= now) idx = i;
+    else break;
   }
-  return idx < 0 ? 0 : idx;
+  return idx;
 }
 
-function formatCountdown(targetDate) {
-  const diff = targetDate - new Date();
+function countdown(roundTime) {
+  const diff = parseTime(roundTime) - new Date();
   if (diff <= 0) {
     const e = Math.abs(diff);
-    const m = Math.floor(e / 60000);
-    const s = Math.floor((e % 60000) / 1000);
-    return `IN PROGRESS · ${m}:${s.toString().padStart(2,'0')} elapsed`;
+    return `IN PROGRESS · ${Math.floor(e/60000)}:${String(Math.floor((e%60000)/1000)).padStart(2,'0')} elapsed`;
   }
-  const m = Math.floor(diff / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  return `Starts in ${m}:${s.toString().padStart(2,'0')}`;
+  return `Starts in ${Math.floor(diff/60000)}:${String(Math.floor((diff%60000)/1000)).padStart(2,'0')}`;
 }
 
-// role: 'current' | 'next' | 'later'
-function renderPanel(panelEl, roundIdx, role) {
-  if (roundIdx >= roundTimes.length) {
-    panelEl.innerHTML = role === 'current' ? '<div class="done-state">ALL DONE</div>' : '';
-    return;
-  }
-  const time = roundTimes[roundIdx];
-  const matches = rounds[time];
-  const roundNum = roundIdx + 1;
-  const byes = getByes(roundIdx);
-  const isCurrent = role === 'current';
-  const isNext = role === 'next';
-  const headerClass = isCurrent ? 'current' : isNext ? 'next' : 'later';
-  const label = isCurrent ? `▶ NOW — Round ${roundNum}` : `Round ${roundNum}`;
-  let cells, courtsClass;
-  if (isCurrent) {
-    courtsClass = 'courts-row';
-    cells = matches.map(({ court, teamA, teamB }) => `
-      <div class="court-cell">
-        <div class="court-tag">${court}</div>
-        <div class="team-name">${teamA}</div>
-        <div class="vs-badge">VS</div>
-        <div class="team-name">${teamB}</div>
-      </div>
-    `).join('');
-  } else {
-    courtsClass = 'courts-row inline-fixtures';
-    cells = matches.map(({ court, teamA, teamB }) => `
-      <div class="court-cell inline">
-        <div class="court-tag">${court.replace('Court ','C')}</div>
-        <div class="matchup">${teamA} <span style="color:#c9a84c;font-size:0.5rem">v</span> ${teamB}</div>
-      </div>
-    `).join('');
-  }
+// ── Render ───────────────────────────────────────────────────
+function renderCurrent(rd, idx) {
+  const courtCells = rd.courts.map((c, i) => `
+    <div class="court-cell">
+      <div class="court-tag">Court ${i + 1}</div>
+      <div class="team-name">${c[0]}</div>
+      <div class="vs-badge">VS</div>
+      <div class="team-name">${c[1]}</div>
+    </div>`).join('');
 
-  const byeHtml = isCurrent && byes.length ? `
+  const byeHtml = rd.bye ? `
     <div class="bye-strip">
       <span class="bye-label">BYE</span>
-      ${byes.map(t => `<span class="bye-team">${t}</span>`).join('')}
-    </div>
-  ` : '';
+      <span class="bye-team">Team ${rd.bye}</span>
+    </div>` : '';
 
-  panelEl.innerHTML = `
-    <div class="round-header ${headerClass}">
-      <div class="round-label">${label}</div>
-      <div class="round-time-block">
-        <div class="round-time">${time}</div>
-        <div class="round-countdown" id="countdown-${roundIdx}"></div>
+  return `
+    <div class="round-panel is-current">
+      <div class="round-header current">
+        <div class="round-label">▶ NOW — ${rd.label}</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="round-time" style="color:#000;">${rd.time}</div>
+          <div class="round-countdown" id="cd-${idx}">${countdown(rd.time)}</div>
+        </div>
       </div>
-    </div>
-    <div class="${courtsClass}">${cells}</div>
-    ${byeHtml}
-  `;
+      <div class="courts-grid">${courtCells}</div>
+      ${byeHtml}
+    </div>`;
 }
 
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+function renderUpcoming(rd, idx, size) {
+  const inlineCells = rd.courts.map((c, i) => `
+    <div class="court-inline">
+      <div class="court-tag">C${i+1}</div>
+      <div class="matchup">${c[0]} <span style="color:#c9a84c;font-size:0.55rem">v</span> ${c[1]}</div>
+    </div>`).join('');
+
+  return `
+    <div class="round-panel ${size}">
+      <div class="round-header ${size === 'is-next' ? 'next' : 'later'}">
+        <div class="round-label">${rd.label}</div>
+        <div class="round-time">${rd.time}</div>
+      </div>
+      <div class="courts-inline">${inlineCells}</div>
+    </div>`;
 }
 
-function updateCountdowns(...idxs) {
-  idxs.forEach(idx => {
-    if (idx >= roundTimes.length) return;
-    const el = document.getElementById(`countdown-${idx}`);
-    if (el) el.textContent = formatCountdown(parseTimeToDate(roundTimes[idx]));
-  });
+function render() {
+  const idx = currentRoundIdx();
+  let html = renderCurrent(ROUNDS[idx], idx);
+  const sizes = ['is-next','is-later','is-later','is-later','is-later'];
+  for (let i = 1; i <= 5; i++) {
+    if (idx + i < ROUNDS.length) {
+      html += renderUpcoming(ROUNDS[idx + i], idx + i, sizes[i - 1]);
+    }
+  }
+  document.getElementById('wrapper').innerHTML = html;
 }
 
+// ── Clock + tick ─────────────────────────────────────────────
 let lastIdx = -1;
 
 function tick() {
-  updateClock();
-  const idx = getCurrentRoundIndex();
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+  const idx = currentRoundIdx();
   if (idx !== lastIdx) {
-    renderPanel(document.getElementById('panelA'), idx,     'current');
-    renderPanel(document.getElementById('panelB'), idx + 1, 'next');
-    renderPanel(document.getElementById('panelC'), idx + 2, 'later');
-    renderPanel(document.getElementById('panelD'), idx + 3, 'later');
-    renderPanel(document.getElementById('panelE'), idx + 4, 'later');
-    renderPanel(document.getElementById('panelF'), idx + 5, 'later');
+    render();
     lastIdx = idx;
   } else {
-    updateCountdowns(idx, idx + 1, idx + 2, idx + 3, idx + 4, idx + 5);
+    const el = document.getElementById(`cd-${idx}`);
+    if (el) el.textContent = countdown(ROUNDS[idx].time);
   }
 }
 
-function init() {
-  loadFixtures();
-  tick();
-  setInterval(tick, 1000);
-}
-
-init();
+tick();
+setInterval(tick, 1000);
 </script>
 </body>
 </html>
