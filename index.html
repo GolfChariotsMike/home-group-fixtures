@@ -109,12 +109,12 @@
 
     .round-panel.is-later .round-countdown { display: none; }
 
-    /* Courts grid — 4x2 for current, 8 single-line fixtures for others */
+    /* Courts grid — 5 columns for current round */
     .courts-row {
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(2, 1fr);
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: 1fr;
       min-height: 0;
       overflow: hidden;
     }
@@ -138,8 +138,8 @@
       gap: 2px;
     }
 
-    .court-cell:nth-child(4n) { border-right: none; }
-    .court-cell:nth-child(n+5) { border-bottom: none; }
+    .court-cell:nth-child(5n) { border-right: none; }
+    .court-cell { border-bottom: none; }
 
     /* Single-row inline cell */
     .court-cell.inline {
