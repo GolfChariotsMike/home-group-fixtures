@@ -256,134 +256,92 @@
 
 <script>
 const fixtures = [
+const FIXTURES = [
   // RD 1 — 1:00 PM
   ["1:00 PM","Court 1","1","2"],
   ["1:00 PM","Court 2","3","11"],
   ["1:00 PM","Court 3","4","10"],
   ["1:00 PM","Court 4","5","9"],
   ["1:00 PM","Court 5","6","8"],
-  
   // RD 2 — 1:15 PM
   ["1:15 PM","Court 1","1","3"],
   ["1:15 PM","Court 2","4","11"],
   ["1:15 PM","Court 3","5","10"],
   ["1:15 PM","Court 4","6","9"],
   ["1:15 PM","Court 5","7","8"],
-  
   // RD 3 — 1:30 PM
   ["1:30 PM","Court 1","1","4"],
   ["1:30 PM","Court 2","2","3"],
   ["1:30 PM","Court 3","5","11"],
   ["1:30 PM","Court 4","6","10"],
   ["1:30 PM","Court 5","7","9"],
-  
   // RD 4 — 1:45 PM
   ["1:45 PM","Court 1","1","5"],
   ["1:45 PM","Court 2","2","4"],
   ["1:45 PM","Court 3","6","11"],
   ["1:45 PM","Court 4","7","10"],
   ["1:45 PM","Court 5","8","9"],
-  
   // RD 5 — 2:00 PM
   ["2:00 PM","Court 1","1","6"],
   ["2:00 PM","Court 2","2","5"],
   ["2:00 PM","Court 3","3","4"],
   ["2:00 PM","Court 4","7","11"],
   ["2:00 PM","Court 5","8","10"],
-  
   // RD 6 — 2:15 PM
   ["2:15 PM","Court 1","1","7"],
   ["2:15 PM","Court 2","2","6"],
   ["2:15 PM","Court 3","3","5"],
   ["2:15 PM","Court 4","8","11"],
   ["2:15 PM","Court 5","9","10"],
-  
   // RD 7 — 2:30 PM
   ["2:30 PM","Court 1","1","8"],
   ["2:30 PM","Court 2","2","7"],
   ["2:30 PM","Court 3","3","6"],
   ["2:30 PM","Court 4","4","5"],
   ["2:30 PM","Court 5","9","11"],
-  
   // RD 8 — 2:45 PM
   ["2:45 PM","Court 1","1","9"],
   ["2:45 PM","Court 2","2","8"],
   ["2:45 PM","Court 3","3","7"],
   ["2:45 PM","Court 4","4","6"],
   ["2:45 PM","Court 5","10","11"],
-  
   // RD 9 — 3:00 PM
   ["3:00 PM","Court 1","1","10"],
   ["3:00 PM","Court 2","2","9"],
   ["3:00 PM","Court 3","3","8"],
   ["3:00 PM","Court 4","4","7"],
   ["3:00 PM","Court 5","5","6"],
-  
   // RD 10 — 3:15 PM
   ["3:15 PM","Court 1","1","11"],
   ["3:15 PM","Court 2","2","10"],
   ["3:15 PM","Court 3","3","9"],
   ["3:15 PM","Court 4","4","8"],
   ["3:15 PM","Court 5","5","7"],
-  
   // RD 11 — 3:30 PM
   ["3:30 PM","Court 1","2","11"],
   ["3:30 PM","Court 2","3","10"],
   ["3:30 PM","Court 3","4","9"],
   ["3:30 PM","Court 4","5","8"],
   ["3:30 PM","Court 5","6","7"],
-  
   // PRELIM — 3:45 PM
-  ["3:45 PM","Court 1","TBD","TBD"],
-  
+  ["3:45 PM","Court 1","PRELIM","TBD"],
   // FINAL — 4:00 PM
-  ["4:00 PM","Court 1","TBD","TBD"],
+  ["4:00 PM","Court 1","FINAL","TBD"],
 ];
-
-const SUPABASE_URL = 'https://fbpdcwbzkcklaxvqtayd.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZicGRjd2J6a2NrbGF4dnF0YXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNDg0OTEsImV4cCI6MjA4NDkyNDQ5MX0.9q0OH-gKssCWc_iNS-mSapunSkP7nezGNZn5fS_8_AA';
-const SESSION_ID = new URLSearchParams(location.search).get('session') || 'default';
 
 let rounds = {};
 let roundTimes = [];
 let ALL_TEAMS = [];
 
-async function loadFixtures() {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/tournament_fixtures?session_id=eq.${encodeURIComponent(SESSION_ID)}&order=time,court&limit=1000`,
-    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-  );
-  const data = await res.json();
-
-  if (!data.length) {
-    // Fall back to hardcoded fixtures if DB is empty
-    return false;
-  }
-
+function loadFixtures() {
   rounds = {};
-  data.forEach(({ time, court, team_a, team_b }) => {
-    const t = time.trim();
-    if (!rounds[t]) rounds[t] = [];
-    rounds[t].push({ court: court.trim(), teamA: team_a.trim(), teamB: team_b.trim() });
-  });
-  Object.values(rounds).forEach(r => r.sort((a, b) =>
-    parseInt(a.court.replace('Court ','')) - parseInt(b.court.replace('Court ',''))
-  ));
-  roundTimes = Object.keys(rounds);
-  ALL_TEAMS = [...new Set(data.flatMap(r => [r.team_a.trim(), r.team_b.trim()]))].sort();
-  roundTimes.sort((a, b) => parseTimeToDate(a) - parseTimeToDate(b));
-  return true;
-}
-
-function loadHardcoded() {
-  const fixtures = [["9:50 AM","Court 1","ALKIMOS 1","KINROSS 2"],["9:50 AM","Court 2","ALKIMOS 2","KINROSS 3"],["9:50 AM","Court 3","ALKIMOS 3","JOSEPH BANKS 1"],["9:50 AM","Court 4","ALKIMOS 4","JOSEPH BANKS 2"],["9:50 AM","Court 5","ASHDALE 1","DUNCRAIG 5"],["9:50 AM","Court 6","ASHDALE 2","DUNCRAIG 6"],["9:50 AM","Court 7","ASHDALE 3","DUNCRAIG 3"],["9:50 AM","Court 8","BELRIDGE 1","DUNCRAIG 4"],["10:00 AM","Court 1","BELRIDGE 2","DUNCRAIG 1"],["10:00 AM","Court 2","BELRIDGE 3","DUNCRAIG 2"],["10:00 AM","Court 3","ALKIMOS 1","KINROSS 3"],["10:00 AM","Court 4","ALKIMOS 2","KINROSS 2"],["10:00 AM","Court 5","ALKIMOS 3","JOSEPH BANKS 2"],["10:00 AM","Court 6","ALKIMOS 4","JOSEPH BANKS 1"],["10:00 AM","Court 7","ASHDALE 1","DUNCRAIG 6"],["10:00 AM","Court 8","ASHDALE 2","DUNCRAIG 5"]];
-  rounds = {};
-  fixtures.forEach(([time, court, teamA, teamB]) => {
+  FIXTURES.forEach(([time, court, teamA, teamB]) => {
     if (!rounds[time]) rounds[time] = [];
     rounds[time].push({ court, teamA, teamB });
   });
   roundTimes = Object.keys(rounds);
-  ALL_TEAMS = [...new Set(fixtures.flatMap(([,,a,b]) => [a,b]))].sort();
+  roundTimes.sort((a, b) => parseTimeToDate(a) - parseTimeToDate(b));
+  ALL_TEAMS = [...new Set(FIXTURES.flatMap(([,,a,b]) => [a,b]))].filter(t => !['PRELIM','FINAL','TBD'].includes(t)).sort((a,b) => +a - +b);
 }
 
 function getByes(roundIdx) {
@@ -513,32 +471,10 @@ function tick() {
   }
 }
 
-async function loadTitle() {
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/tournament_settings?session_id=eq.${encodeURIComponent(SESSION_ID)}&select=title`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-    );
-    const data = await res.json();
-    if (data.length && data[0].title) {
-      document.getElementById('pageTitle').textContent = '🏐 ' + data[0].title;
-      document.title = data[0].title;
-    }
-  } catch(e) {}
-}
-
-async function init() {
-  await loadTitle();
-  const ok = await loadFixtures();
-  if (!ok) loadHardcoded();
+function init() {
+  loadFixtures();
   tick();
   setInterval(tick, 1000);
-  // Refresh fixtures + title from DB every 30 seconds
-  setInterval(async () => {
-    await loadTitle();
-    const ok = await loadFixtures();
-    if (!ok) loadHardcoded();
-  }, 30000);
 }
 
 init();
