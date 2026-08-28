@@ -58,8 +58,8 @@
     }
 
     .round-panel.is-current { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    .round-panel.is-next    { flex-shrink: 0; height: 80px; }
-    .round-panel.is-later   { flex-shrink: 0; height: 62px; }
+    .round-panel.is-next    { flex-shrink: 0; height: 68px; }
+    .round-panel.is-later   { flex-shrink: 0; height: 52px; }
 
     .round-header {
       padding: 8px 20px;
@@ -305,8 +305,8 @@ function renderUpcoming(rd, idx, size) {
 function render() {
   const idx = currentRoundIdx();
   let html = renderCurrent(ROUNDS[idx], idx);
-  const sizes = ['is-next','is-later','is-later','is-later','is-later'];
-  for (let i = 1; i <= 5; i++) {
+  const sizes = ['is-next','is-later','is-later','is-later'];
+  for (let i = 1; i <= 4; i++) {
     if (idx + i < ROUNDS.length) {
       html += renderUpcoming(ROUNDS[idx + i], idx + i, sizes[i - 1]);
     }
