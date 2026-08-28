@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Duncraig SHS — Volleyball Fixtures</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #111;
+      border-bottom: 3px solid #e63946;
+      padding: 12px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    header .clock {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #e63946;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Four panels stacked — current is big, others compressed */
+    .rounds-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background: #222;
+      overflow: hidden;
+    }
+
+    .round-panel {
+      display: flex;
+      flex-direction: column;
+      background: #0f0f0f;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .round-panel.is-current { flex-shrink: 0; height: 35vh; }
+    .round-panel.is-next    { flex-shrink: 0; height: 90px; }
+    .round-panel.is-later   { flex-shrink: 0; height: 80px; }
+
+    .round-header {
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .round-header.current  { background: #c0152a; }
+    .round-header.next     { background: #1a3a5c; padding: 2px 10px; min-height: 0; }
+    .round-header.later    { background: #1a2a1a; padding: 2px 10px; min-height: 0; }
+
+    .round-label {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .round-panel.is-next .round-label,
+    .round-panel.is-later .round-label { font-size: 0.65rem; }
+
+    .round-time-block {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .round-time {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .round-panel.is-next .round-time,
+    .round-panel.is-later .round-time { font-size: 0.65rem; }
+
+    .round-countdown {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      font-variant-numeric: tabular-nums;
+      background: rgba(0,0,0,0.25);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .round-panel.is-later .round-countdown { display: none; }
+
+    /* Courts grid — 4x2 for current, 8 single-line fixtures for others */
+    .courts-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* Upcoming rounds: all 8 courts in a single row */
+    .courts-row.inline-fixtures {
+      display: flex;
+      flex-direction: row;
+      height: auto;
+    }
+
+    .court-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 4px;
+      border-right: 1px solid #1c1c1c;
+      border-bottom: 1px solid #1c1c1c;
+      text-align: center;
+      gap: 2px;
+    }
+
+    .court-cell:nth-child(4n) { border-right: none; }
+    .court-cell:nth-child(n+5) { border-bottom: none; }
+
+    /* Single-row inline cell */
+    .court-cell.inline {
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 4px;
+      gap: 1px;
+      border-right: 1px solid #1c1c1c;
+      border-bottom: none;
+      min-width: 0;
+    }
+
+    .court-cell.inline:last-child { border-right: none; }
+
+    .court-tag {
+      font-size: 0.65rem;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .court-cell.inline .court-tag {
+      font-size: 0.55rem;
+      color: #888;
+      white-space: nowrap;
+    }
+
+    .team-name {
+      font-size: 0.9rem;
+      font-weight: 800;
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+    .court-cell.inline .matchup {
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #fff;
+      width: 100%;
+      text-align: center;
+    }
+
+    .vs-badge {
+      font-size: 0.6rem;
+      color: #e63946;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    /* Bye strip */
+    .bye-strip {
+      flex-shrink: 0;
+      background: #0a0a0a;
+      border-top: 1px solid #1a1a1a;
+      padding: 4px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .bye-label {
+      font-size: 0.65rem;
+      color: #555;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .bye-team {
+      font-size: 0.65rem;
+      color: #555;
+      font-weight: 600;
+      background: #151515;
+      border: 1px solid #222;
+      padding: 1px 7px;
+      border-radius: 3px;
+    }
+
+    .done-state {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1 id="pageTitle">🏐 Year 10 Lightning Carnival</h1>
+  <div class="clock" id="clock">--:--:--</div>
+</header>
+
+<div class="rounds-wrapper" id="roundsWrapper">
+  <div class="round-panel is-current" id="panelA"></div>
+  <div class="round-panel is-next" id="panelB"></div>
+  <div class="round-panel is-later" id="panelC"></div>
+  <div class="round-panel is-later" id="panelD"></div>
+  <div class="round-panel is-later" id="panelE"></div>
+  <div class="round-panel is-later" id="panelF"></div>
+</div>
+
+<script>
+const fixtures = [
+  ["9:50 AM","Court 1","ALKIMOS 1","KINROSS 2"],
+  ["9:50 AM","Court 2","ALKIMOS 2","KINROSS 3"],
+  ["9:50 AM","Court 3","ALKIMOS 3","JOSEPH BANKS 1"],
+  ["9:50 AM","Court 4","ALKIMOS 4","JOSEPH BANKS 2"],
+  ["9:50 AM","Court 5","ASHDALE 1","DUNCRAIG 5"],
+  ["9:50 AM","Court 6","ASHDALE 2","DUNCRAIG 6"],
+  ["9:50 AM","Court 7","ASHDALE 3","DUNCRAIG 3"],
+  ["9:50 AM","Court 8","BELRIDGE 1","DUNCRAIG 4"],
+  ["10:00 AM","Court 1","BELRIDGE 2","DUNCRAIG 1"],
+  ["10:00 AM","Court 2","BELRIDGE 3","DUNCRAIG 2"],
+  ["10:00 AM","Court 3","ALKIMOS 1","KINROSS 3"],
+  ["10:00 AM","Court 4","ALKIMOS 2","KINROSS 2"],
+  ["10:00 AM","Court 5","ALKIMOS 3","JOSEPH BANKS 2"],
+  ["10:00 AM","Court 6","ALKIMOS 4","JOSEPH BANKS 1"],
+  ["10:00 AM","Court 7","ASHDALE 1","DUNCRAIG 6"],
+  ["10:00 AM","Court 8","ASHDALE 2","DUNCRAIG 5"],
+  ["10:10 AM","Court 1","ASHDALE 3","DUNCRAIG 4"],
+  ["10:10 AM","Court 2","BELRIDGE 1","DUNCRAIG 3"],
+  ["10:10 AM","Court 3","BELRIDGE 2","DUNCRAIG 2"],
+  ["10:10 AM","Court 4","BELRIDGE 3","DUNCRAIG 1"],
+  ["10:10 AM","Court 5","JOSEPH BANKS 1","ALKIMOS 1"],
+  ["10:10 AM","Court 6","JOSEPH BANKS 2","ALKIMOS 2"],
+  ["10:10 AM","Court 7","DUNCRAIG 5","KINROSS 2"],
+  ["10:10 AM","Court 8","DUNCRAIG 6","KINROSS 3"],
+  ["10:20 AM","Court 1","DUNCRAIG 3","ALKIMOS 3"],
+  ["10:20 AM","Court 2","DUNCRAIG 4","ALKIMOS 4"],
+  ["10:20 AM","Court 3","DUNCRAIG 1","ASHDALE 1"],
+  ["10:20 AM","Court 4","DUNCRAIG 2","ASHDALE 2"],
+  ["10:20 AM","Court 5","BELRIDGE 2","ASHDALE 3"],
+  ["10:20 AM","Court 6","BELRIDGE 3","BELRIDGE 1"],
+  ["10:20 AM","Court 7","JOSEPH BANKS 1","ALKIMOS 2"],
+  ["10:20 AM","Court 8","JOSEPH BANKS 2","ALKIMOS 1"],
+  ["10:30 AM","Court 1","DUNCRAIG 5","KINROSS 3"],
+  ["10:30 AM","Court 2","DUNCRAIG 6","KINROSS 2"],
+  ["10:30 AM","Court 3","DUNCRAIG 3","ALKIMOS 4"],
+  ["10:30 AM","Court 4","DUNCRAIG 4","ALKIMOS 3"],
+  ["10:30 AM","Court 5","DUNCRAIG 1","ASHDALE 2"],
+  ["10:30 AM","Court 6","DUNCRAIG 2","ASHDALE 1"],
+  ["10:30 AM","Court 7","BELRIDGE 2","BELRIDGE 1"],
+  ["10:30 AM","Court 8","BELRIDGE 3","ASHDALE 3"],
+  ["10:40 AM","Court 1","ALKIMOS 2","DUNCRAIG 6"],
+  ["10:40 AM","Court 2","ALKIMOS 1","DUNCRAIG 5"],
+  ["10:40 AM","Court 3","JOSEPH BANKS 2","DUNCRAIG 4"],
+  ["10:40 AM","Court 4","JOSEPH BANKS 1","DUNCRAIG 3"],
+  ["10:40 AM","Court 5","KINROSS 3","DUNCRAIG 2"],
+  ["10:40 AM","Court 6","KINROSS 2","DUNCRAIG 1"],
+  ["10:40 AM","Court 7","ALKIMOS 4","BELRIDGE 3"],
+  ["10:40 AM","Court 8","ALKIMOS 3","BELRIDGE 2"],
+  ["10:50 AM","Court 1","ASHDALE 2","BELRIDGE 1"],
+  ["10:50 AM","Court 2","ASHDALE 1","ASHDALE 3"],
+  ["10:50 AM","Court 3","ALKIMOS 2","DUNCRAIG 5"],
+  ["10:50 AM","Court 4","ALKIMOS 1","DUNCRAIG 6"],
+  ["10:50 AM","Court 5","JOSEPH BANKS 1","DUNCRAIG 4"],
+  ["10:50 AM","Court 6","JOSEPH BANKS 2","DUNCRAIG 3"],
+  ["10:50 AM","Court 7","KINROSS 3","DUNCRAIG 1"],
+  ["10:50 AM","Court 8","KINROSS 2","DUNCRAIG 2"],
+  ["11:00 AM","Court 1","ALKIMOS 3","BELRIDGE 3"],
+  ["11:00 AM","Court 2","ALKIMOS 4","BELRIDGE 2"],
+  ["11:00 AM","Court 3","ASHDALE 2","ASHDALE 3"],
+  ["11:00 AM","Court 4","ASHDALE 1","BELRIDGE 1"],
+  ["11:00 AM","Court 5","DUNCRAIG 3","ALKIMOS 1"],
+  ["11:00 AM","Court 6","DUNCRAIG 4","ALKIMOS 2"],
+  ["11:00 AM","Court 7","DUNCRAIG 2","DUNCRAIG 6"],
+  ["11:00 AM","Court 8","DUNCRAIG 1","DUNCRAIG 5"],
+  ["11:10 AM","Court 1","BELRIDGE 2","JOSEPH BANKS 1"],
+  ["11:10 AM","Court 2","BELRIDGE 3","JOSEPH BANKS 2"],
+  ["11:10 AM","Court 3","ASHDALE 3","KINROSS 2"],
+  ["11:10 AM","Court 4","BELRIDGE 1","KINROSS 3"],
+  ["11:10 AM","Court 5","ASHDALE 2","ALKIMOS 4"],
+  ["11:10 AM","Court 6","ASHDALE 1","ALKIMOS 3"],
+  ["11:10 AM","Court 7","DUNCRAIG 4","ALKIMOS 1"],
+  ["11:10 AM","Court 8","DUNCRAIG 3","ALKIMOS 2"],
+  ["11:20 AM","Court 1","DUNCRAIG 2","DUNCRAIG 5"],
+  ["11:20 AM","Court 2","DUNCRAIG 1","DUNCRAIG 6"],
+  ["11:20 AM","Court 3","BELRIDGE 3","JOSEPH BANKS 1"],
+  ["11:20 AM","Court 4","BELRIDGE 2","JOSEPH BANKS 2"],
+  ["11:20 AM","Court 5","BELRIDGE 1","KINROSS 2"],
+  ["11:20 AM","Court 6","ASHDALE 3","KINROSS 3"],
+  ["11:20 AM","Court 7","ASHDALE 2","ALKIMOS 3"],
+  ["11:20 AM","Court 8","ASHDALE 1","ALKIMOS 4"],
+  ["11:30 AM","Court 1","DUNCRAIG 4","BELRIDGE 3"],
+  ["11:30 AM","Court 2","DUNCRAIG 3","BELRIDGE 2"],
+  ["11:30 AM","Court 3","DUNCRAIG 6","BELRIDGE 1"],
+  ["11:30 AM","Court 4","DUNCRAIG 5","ASHDALE 3"],
+  ["11:30 AM","Court 5","ALKIMOS 2","DUNCRAIG 2"],
+  ["11:30 AM","Court 6","ALKIMOS 1","DUNCRAIG 1"],
+  ["11:30 AM","Court 7","JOSEPH BANKS 2","ASHDALE 2"],
+  ["11:30 AM","Court 8","JOSEPH BANKS 1","ASHDALE 1"],
+  ["11:40 AM","Court 1","KINROSS 3","ALKIMOS 4"],
+  ["11:40 AM","Court 2","KINROSS 2","ALKIMOS 3"],
+  ["11:40 AM","Court 3","ALKIMOS 1","DUNCRAIG 2"],
+  ["11:40 AM","Court 4","ALKIMOS 2","DUNCRAIG 1"],
+  ["11:40 AM","Court 5","DUNCRAIG 3","BELRIDGE 3"],
+  ["11:40 AM","Court 6","DUNCRAIG 4","BELRIDGE 2"],
+  ["11:40 AM","Court 7","DUNCRAIG 5","BELRIDGE 1"],
+  ["11:40 AM","Court 8","DUNCRAIG 6","ASHDALE 3"],
+  ["11:50 AM","Court 1","JOSEPH BANKS 2","ASHDALE 1"],
+  ["11:50 AM","Court 2","JOSEPH BANKS 1","ASHDALE 2"],
+  ["11:50 AM","Court 3","KINROSS 2","ALKIMOS 4"],
+  ["11:50 AM","Court 4","KINROSS 3","ALKIMOS 3"],
+  ["11:50 AM","Court 5","BELRIDGE 3","ALKIMOS 2"],
+  ["11:50 AM","Court 6","BELRIDGE 2","ALKIMOS 1"],
+  ["11:50 AM","Court 7","ASHDALE 3","DUNCRAIG 1"],
+  ["11:50 AM","Court 8","BELRIDGE 1","DUNCRAIG 2"],
+  ["12:00 PM","Court 1","ASHDALE 1","DUNCRAIG 3"],
+  ["12:00 PM","Court 2","ASHDALE 2","DUNCRAIG 4"],
+  ["12:00 PM","Court 3","KINROSS 3","JOSEPH BANKS 2"],
+  ["12:00 PM","Court 4","KINROSS 2","JOSEPH BANKS 1"],
+  ["12:00 PM","Court 5","ALKIMOS 4","DUNCRAIG 6"],
+  ["12:00 PM","Court 6","ALKIMOS 3","DUNCRAIG 5"],
+  ["12:00 PM","Court 7","BELRIDGE 2","ALKIMOS 2"],
+  ["12:00 PM","Court 8","BELRIDGE 3","ALKIMOS 1"],
+  ["12:10 PM","Court 1","ASHDALE 3","DUNCRAIG 2"],
+  ["12:10 PM","Court 2","BELRIDGE 1","DUNCRAIG 1"],
+  ["12:10 PM","Court 3","ASHDALE 1","DUNCRAIG 4"],
+  ["12:10 PM","Court 4","ASHDALE 2","DUNCRAIG 3"],
+  ["12:10 PM","Court 5","ALKIMOS 3","DUNCRAIG 6"],
+  ["12:10 PM","Court 6","ALKIMOS 4","DUNCRAIG 5"],
+  ["12:10 PM","Court 7","KINROSS 2","JOSEPH BANKS 2"],
+  ["12:10 PM","Court 8","KINROSS 3","JOSEPH BANKS 1"],
+  ["12:20 PM","Court 1","ALKIMOS 2","BELRIDGE 1"],
+  ["12:20 PM","Court 2","ALKIMOS 1","ASHDALE 3"],
+  ["12:20 PM","Court 3","ASHDALE 2","BELRIDGE 3"],
+  ["12:20 PM","Court 4","ASHDALE 1","BELRIDGE 2"],
+  ["12:20 PM","Court 5","DUNCRAIG 4","KINROSS 3"],
+  ["12:20 PM","Court 6","DUNCRAIG 3","KINROSS 2"],
+  ["12:20 PM","Court 7","DUNCRAIG 2","ALKIMOS 4"],
+  ["12:20 PM","Court 8","DUNCRAIG 1","ALKIMOS 3"],
+  ["12:30 PM","Court 1","DUNCRAIG 6","JOSEPH BANKS 2"],
+  ["12:30 PM","Court 2","DUNCRAIG 5","JOSEPH BANKS 1"],
+  ["12:30 PM","Court 3","ALKIMOS 1","BELRIDGE 1"],
+  ["12:30 PM","Court 4","ALKIMOS 2","ASHDALE 3"],
+  ["12:30 PM","Court 5","DUNCRAIG 1","ALKIMOS 4"],
+  ["12:30 PM","Court 6","DUNCRAIG 2","ALKIMOS 3"],
+  ["12:30 PM","Court 7","ASHDALE 1","BELRIDGE 3"],
+  ["12:30 PM","Court 8","ASHDALE 2","BELRIDGE 2"],
+  ["12:40 PM","Court 1","ASHDALE 1","ALKIMOS 1"],
+  ["12:40 PM","Court 2","ASHDALE 2","ALKIMOS 2"],
+  ["12:40 PM","Court 3","ALKIMOS 3","ASHDALE 3"],
+  ["12:40 PM","Court 4","ALKIMOS 4","BELRIDGE 1"],
+  ["12:40 PM","Court 5","DUNCRAIG 6","JOSEPH BANKS 1"],
+  ["12:40 PM","Court 6","DUNCRAIG 5","JOSEPH BANKS 2"],
+  ["12:40 PM","Court 7","DUNCRAIG 3","KINROSS 3"],
+  ["12:40 PM","Court 8","DUNCRAIG 4","KINROSS 2"],
+  ["12:50 PM","Court 1","JOSEPH BANKS 1","DUNCRAIG 1"],
+  ["12:50 PM","Court 2","JOSEPH BANKS 2","DUNCRAIG 2"],
+  ["12:50 PM","Court 3","DUNCRAIG 5","DUNCRAIG 3"],
+  ["12:50 PM","Court 4","DUNCRAIG 6","DUNCRAIG 4"],
+  ["12:50 PM","Court 5","KINROSS 2","BELRIDGE 2"],
+  ["12:50 PM","Court 6","KINROSS 3","BELRIDGE 3"],
+  ["12:50 PM","Court 7","ASHDALE 2","ALKIMOS 1"],
+  ["12:50 PM","Court 8","ASHDALE 1","ALKIMOS 2"],
+  ["1:00 PM","Court 1","ALKIMOS 4","ASHDALE 3"],
+  ["1:00 PM","Court 2","ALKIMOS 3","BELRIDGE 1"],
+  ["1:00 PM","Court 3","KINROSS 3","BELRIDGE 2"],
+  ["1:00 PM","Court 4","KINROSS 2","BELRIDGE 3"],
+  ["1:00 PM","Court 5","DUNCRAIG 5","DUNCRAIG 4"],
+  ["1:00 PM","Court 6","DUNCRAIG 6","DUNCRAIG 3"],
+  ["1:00 PM","Court 7","JOSEPH BANKS 2","DUNCRAIG 1"],
+  ["1:00 PM","Court 8","JOSEPH BANKS 1","DUNCRAIG 2"],
+  ["1:10 PM","Court 1","KINROSS 3","ASHDALE 2"],
+  ["1:10 PM","Court 2","KINROSS 2","ASHDALE 1"],
+  ["1:10 PM","Court 3","ALKIMOS 2","ALKIMOS 4"],
+  ["1:10 PM","Court 4","ALKIMOS 1","ALKIMOS 3"],
+  ["1:10 PM","Court 5","ASHDALE 3","JOSEPH BANKS 1"],
+  ["1:10 PM","Court 6","BELRIDGE 1","JOSEPH BANKS 2"],
+  ["1:10 PM","Court 7","BELRIDGE 2","DUNCRAIG 5"],
+  ["1:10 PM","Court 8","BELRIDGE 3","DUNCRAIG 6"],
+  ["1:20 PM","Court 1","KINROSS 2","ASHDALE 2"],
+  ["1:20 PM","Court 2","KINROSS 3","ASHDALE 1"],
+  ["1:20 PM","Court 3","DUNCRAIG 1","DUNCRAIG 3"],
+  ["1:20 PM","Court 4","DUNCRAIG 2","DUNCRAIG 4"],
+  ["1:20 PM","Court 5","ASHDALE 3","JOSEPH BANKS 2"],
+  ["1:20 PM","Court 6","BELRIDGE 1","JOSEPH BANKS 1"],
+  ["1:20 PM","Court 7","ALKIMOS 2","ALKIMOS 3"],
+  ["1:20 PM","Court 8","ALKIMOS 1","ALKIMOS 4"],
+  ["1:30 PM","Court 1","ALKIMOS 1","ALKIMOS 2"],
+  ["1:30 PM","Court 2","ALKIMOS 3","ALKIMOS 4"],
+  ["1:30 PM","Court 3","BELRIDGE 2","DUNCRAIG 6"],
+  ["1:30 PM","Court 4","BELRIDGE 3","DUNCRAIG 5"],
+  ["1:30 PM","Court 5","ASHDALE 1","ASHDALE 2"],
+  ["1:30 PM","Court 6","ASHDALE 3","BELRIDGE 1"],
+  ["1:30 PM","Court 7","DUNCRAIG 1","DUNCRAIG 4"],
+  ["1:30 PM","Court 8","DUNCRAIG 2","DUNCRAIG 3"],
+  ["1:40 PM","Court 1","BELRIDGE 2","BELRIDGE 3"],
+  ["1:40 PM","Court 2","DUNCRAIG 1","DUNCRAIG 2"],
+  ["1:40 PM","Court 3","DUNCRAIG 5","DUNCRAIG 6"],
+  ["1:40 PM","Court 4","JOSEPH BANKS 1","JOSEPH BANKS 2"],
+  ["1:40 PM","Court 5","KINROSS 2","KINROSS 3"],
+  ["1:40 PM","Court 7","DUNCRAIG 3","DUNCRAIG 4"],
+];
+
+const SUPABASE_URL = 'https://fbpdcwbzkcklaxvqtayd.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZicGRjd2J6a2NrbGF4dnF0YXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNDg0OTEsImV4cCI6MjA4NDkyNDQ5MX0.9q0OH-gKssCWc_iNS-mSapunSkP7nezGNZn5fS_8_AA';
+const SESSION_ID = new URLSearchParams(location.search).get('session') || 'default';
+
+let rounds = {};
+let roundTimes = [];
+let ALL_TEAMS = [];
+
+async function loadFixtures() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/tournament_fixtures?session_id=eq.${encodeURIComponent(SESSION_ID)}&order=time,court&limit=1000`,
+    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+  );
+  const data = await res.json();
+
+  if (!data.length) {
+    // Fall back to hardcoded fixtures if DB is empty
+    return false;
+  }
+
+  rounds = {};
+  data.forEach(({ time, court, team_a, team_b }) => {
+    const t = time.trim();
+    if (!rounds[t]) rounds[t] = [];
+    rounds[t].push({ court: court.trim(), teamA: team_a.trim(), teamB: team_b.trim() });
+  });
+  Object.values(rounds).forEach(r => r.sort((a, b) =>
+    parseInt(a.court.replace('Court ','')) - parseInt(b.court.replace('Court ',''))
+  ));
+  roundTimes = Object.keys(rounds);
+  ALL_TEAMS = [...new Set(data.flatMap(r => [r.team_a.trim(), r.team_b.trim()]))].sort();
+  roundTimes.sort((a, b) => parseTimeToDate(a) - parseTimeToDate(b));
+  return true;
+}
+
+function loadHardcoded() {
+  const fixtures = [["9:50 AM","Court 1","ALKIMOS 1","KINROSS 2"],["9:50 AM","Court 2","ALKIMOS 2","KINROSS 3"],["9:50 AM","Court 3","ALKIMOS 3","JOSEPH BANKS 1"],["9:50 AM","Court 4","ALKIMOS 4","JOSEPH BANKS 2"],["9:50 AM","Court 5","ASHDALE 1","DUNCRAIG 5"],["9:50 AM","Court 6","ASHDALE 2","DUNCRAIG 6"],["9:50 AM","Court 7","ASHDALE 3","DUNCRAIG 3"],["9:50 AM","Court 8","BELRIDGE 1","DUNCRAIG 4"],["10:00 AM","Court 1","BELRIDGE 2","DUNCRAIG 1"],["10:00 AM","Court 2","BELRIDGE 3","DUNCRAIG 2"],["10:00 AM","Court 3","ALKIMOS 1","KINROSS 3"],["10:00 AM","Court 4","ALKIMOS 2","KINROSS 2"],["10:00 AM","Court 5","ALKIMOS 3","JOSEPH BANKS 2"],["10:00 AM","Court 6","ALKIMOS 4","JOSEPH BANKS 1"],["10:00 AM","Court 7","ASHDALE 1","DUNCRAIG 6"],["10:00 AM","Court 8","ASHDALE 2","DUNCRAIG 5"]];
+  rounds = {};
+  fixtures.forEach(([time, court, teamA, teamB]) => {
+    if (!rounds[time]) rounds[time] = [];
+    rounds[time].push({ court, teamA, teamB });
+  });
+  roundTimes = Object.keys(rounds);
+  ALL_TEAMS = [...new Set(fixtures.flatMap(([,,a,b]) => [a,b]))].sort();
+}
+
+function getByes(roundIdx) {
+  if (roundIdx >= roundTimes.length) return [];
+  const playing = new Set();
+  rounds[roundTimes[roundIdx]].forEach(({ teamA, teamB }) => {
+    playing.add(teamA); playing.add(teamB);
+  });
+  return ALL_TEAMS.filter(t => !playing.has(t));
+}
+
+function parseTimeToDate(str) {
+  const today = new Date();
+  const [time, period] = str.trim().split(' ');
+  let [h, m] = time.split(':').map(Number);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate(), h, m, 0);
+}
+
+function getCurrentRoundIndex() {
+  const now = new Date();
+  let idx = -1;
+  for (let i = 0; i < roundTimes.length; i++) {
+    if (parseTimeToDate(roundTimes[i]) <= now) idx = i;
+  }
+  return idx < 0 ? 0 : idx;
+}
+
+function formatCountdown(targetDate) {
+  const diff = targetDate - new Date();
+  if (diff <= 0) {
+    const e = Math.abs(diff);
+    const m = Math.floor(e / 60000);
+    const s = Math.floor((e % 60000) / 1000);
+    return `IN PROGRESS · ${m}:${s.toString().padStart(2,'0')} elapsed`;
+  }
+  const m = Math.floor(diff / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return `Starts in ${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// role: 'current' | 'next' | 'later'
+function renderPanel(panelEl, roundIdx, role) {
+  if (roundIdx >= roundTimes.length) {
+    panelEl.innerHTML = role === 'current' ? '<div class="done-state">ALL DONE</div>' : '';
+    return;
+  }
+  const time = roundTimes[roundIdx];
+  const matches = rounds[time];
+  const roundNum = roundIdx + 1;
+  const byes = getByes(roundIdx);
+  const isCurrent = role === 'current';
+  const isNext = role === 'next';
+  const headerClass = isCurrent ? 'current' : isNext ? 'next' : 'later';
+  const label = isCurrent ? `▶ NOW — Round ${roundNum}` : `Round ${roundNum}`;
+  let cells, courtsClass;
+  if (isCurrent) {
+    courtsClass = 'courts-row';
+    cells = matches.map(({ court, teamA, teamB }) => `
+      <div class="court-cell">
+        <div class="court-tag">${court}</div>
+        <div class="team-name">${teamA}</div>
+        <div class="vs-badge">VS</div>
+        <div class="team-name">${teamB}</div>
+      </div>
+    `).join('');
+  } else {
+    courtsClass = 'courts-row inline-fixtures';
+    cells = matches.map(({ court, teamA, teamB }) => `
+      <div class="court-cell inline">
+        <div class="court-tag">${court.replace('Court ','C')}</div>
+        <div class="matchup">${teamA} <span style="color:#e63946;font-size:0.5rem">v</span> ${teamB}</div>
+      </div>
+    `).join('');
+  }
+
+  const byeHtml = isCurrent && byes.length ? `
+    <div class="bye-strip">
+      <span class="bye-label">BYE</span>
+      ${byes.map(t => `<span class="bye-team">${t}</span>`).join('')}
+    </div>
+  ` : '';
+
+  panelEl.innerHTML = `
+    <div class="round-header ${headerClass}">
+      <div class="round-label">${label}</div>
+      <div class="round-time-block">
+        <div class="round-time">${time}</div>
+        <div class="round-countdown" id="countdown-${roundIdx}"></div>
+      </div>
+    </div>
+    <div class="${courtsClass}">${cells}</div>
+    ${byeHtml}
+  `;
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+}
+
+function updateCountdowns(...idxs) {
+  idxs.forEach(idx => {
+    if (idx >= roundTimes.length) return;
+    const el = document.getElementById(`countdown-${idx}`);
+    if (el) el.textContent = formatCountdown(parseTimeToDate(roundTimes[idx]));
+  });
+}
+
+let lastIdx = -1;
+
+function tick() {
+  updateClock();
+  const idx = getCurrentRoundIndex();
+  if (idx !== lastIdx) {
+    renderPanel(document.getElementById('panelA'), idx,     'current');
+    renderPanel(document.getElementById('panelB'), idx + 1, 'next');
+    renderPanel(document.getElementById('panelC'), idx + 2, 'later');
+    renderPanel(document.getElementById('panelD'), idx + 3, 'later');
+    renderPanel(document.getElementById('panelE'), idx + 4, 'later');
+    renderPanel(document.getElementById('panelF'), idx + 5, 'later');
+    lastIdx = idx;
+  } else {
+    updateCountdowns(idx, idx + 1, idx + 2, idx + 3, idx + 4, idx + 5);
+  }
+}
+
+async function loadTitle() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/tournament_settings?session_id=eq.${encodeURIComponent(SESSION_ID)}&select=title`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    const data = await res.json();
+    if (data.length && data[0].title) {
+      document.getElementById('pageTitle').textContent = '🏐 ' + data[0].title;
+      document.title = data[0].title;
+    }
+  } catch(e) {}
+}
+
+async function init() {
+  await loadTitle();
+  const ok = await loadFixtures();
+  if (!ok) loadHardcoded();
+  tick();
+  setInterval(tick, 1000);
+  // Refresh fixtures + title from DB every 30 seconds
+  setInterval(async () => {
+    await loadTitle();
+    const ok = await loadFixtures();
+    if (!ok) loadHardcoded();
+  }, 30000);
+}
+
+init();
+</script>
+</body>
+</html>
